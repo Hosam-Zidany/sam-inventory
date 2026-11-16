@@ -19,7 +19,7 @@ const EMPTY_FORM = {
   counted: '',
   receiveTotal: '',
   receiveDisplay: '',
-  receiveWarehouse: '',
+  receiveStorage: '',
   note: '',
 };
 
@@ -68,7 +68,7 @@ export default function StockScreen() {
       ...current,
       receiveTotal: value,
       receiveDisplay: display ? String(display) : '',
-      receiveWarehouse: display ? String(Math.max(0, Math.floor(total) - display)) : '',
+      receiveStorage: display ? String(Math.max(0, Math.floor(total) - display)) : '',
     }));
   }
 
@@ -81,13 +81,13 @@ export default function StockScreen() {
     if (action === 'receive_stock') {
       const total = Number(form.receiveTotal);
       const display = Number(form.receiveDisplay);
-      const warehouse = Number(form.receiveWarehouse);
-      if (!Number.isInteger(total) || total <= 0 || !Number.isInteger(display) || !Number.isInteger(warehouse) || display < 0 || warehouse < 0 || display + warehouse !== total) {
+      const storage = Number(form.receiveStorage);
+      if (!Number.isInteger(total) || total <= 0 || !Number.isInteger(display) || !Number.isInteger(storage) || display < 0 || storage < 0 || display + storage !== total) {
         setBusy(false);
         setError(t('receiveAllocationError'));
         return;
       }
-      for (const [location, qty] of [['display', display], ['warehouse', warehouse]] as const) {
+      for (const [location, qty] of [['display', display], ['storage', storage]] as const) {
         if (qty === 0) continue;
         const result = await sb.rpc('receive_stock', {
           p_product: form.product,
@@ -114,7 +114,7 @@ export default function StockScreen() {
       return;
     }
     setSuccess(t(`actions.${action}.success`));
-    setForm((current) => ({ ...current, qty: '', counted: '', receiveTotal: '', receiveDisplay: '', receiveWarehouse: '', note: '' }));
+    setForm((current) => ({ ...current, qty: '', counted: '', receiveTotal: '', receiveDisplay: '', receiveStorage: '', note: '' }));
     await load();
   }
 
@@ -144,7 +144,7 @@ export default function StockScreen() {
             <Field label={t('quantity')}><Input type="number" min="1" step="1" value={form.receiveTotal} onChange={(e) => updateReceiveTotal(e.target.value)} required /></Field>
             <div className="grid grid-cols-2 gap-2">
               <Field label={t('displayQuantity')}><Input type="number" min="0" step="1" value={form.receiveDisplay} onChange={(e) => update('receiveDisplay', e.target.value)} /></Field>
-              <Field label={t('warehouseQuantity')}><Input type="number" min="0" step="1" value={form.receiveWarehouse} onChange={(e) => update('receiveWarehouse', e.target.value)} /></Field>
+              <Field label={t('storageQuantity')}><Input type="number" min="0" step="1" value={form.receiveStorage} onChange={(e) => update('receiveStorage', e.target.value)} /></Field>
             </div>
             <Field label={t('note')}><Input value={form.note} onChange={(e) => update('note', e.target.value)} /></Field>
           </ActionCard>
@@ -153,7 +153,7 @@ export default function StockScreen() {
             title={t('actions.transfer_stock.title')}
             button={t('actions.transfer_stock.button')}
             disabled={busy}
-            onSubmit={() => void runAction('return_stock')}
+            onSubmit={() => void runAction('transfer_stock')}
           >
             <SearchableProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
             <div className="grid grid-cols-2 gap-2">
@@ -168,7 +168,7 @@ export default function StockScreen() {
             title={t('actions.return_stock.title')}
             button={t('actions.return_stock.button')}
             disabled={busy}
-            onSubmit={() => void runAction('transfer_stock')}
+            onSubmit={() => void runAction('return_stock')}
           >
             <SearchableProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
             <LocationSelect locations={visibleLocations} value={form.from === 'warehouse' ? 'display' : form.from} onChange={(v) => update('from', v)} label={t('from')} />
