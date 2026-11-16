@@ -246,6 +246,28 @@ select t.fails('update public.sale_items set qty = 1', 'append_only:%');
 select t.become(:admin::uuid);
 select t.fails(format('update public.staff_roles set active = false where user_id = %L', :admin), 'last_admin:%');
 
+-- 11b. Catalog import: merge semantics, atomic, admin only --------------
+select t.become(:admin::uuid);
+select t.ok((select public.import_products(jsonb_build_array(
+              jsonb_build_object('item_code', 'T-001', 'price_usd', 12, 'wireless_price_usd', null),
+              jsonb_build_object('item_code', 'N-100', 'name', 'Imported', 'category', 'Routers', 'price_usd', 7, 'price_syp', 105000)
+            ))::text) = '{"updated": 1, "inserted": 1}',
+            'import: one product updated, one inserted');
+select t.ok((select price_usd = 12 and wireless_price_usd is null and for_sale and price_syp = 150000 and name = 'Router'
+               from public.products where item_code = 'T-001'),
+            'import updates only the keys present (for_sale, SYP price and name untouched)');
+select t.ok((select for_sale = false and unit = 'قطعة' and wireless_price_syp is null from public.products where item_code = 'N-100'),
+            'import: new product gets column defaults for absent keys');
+select t.fails('select public.import_products(jsonb_build_array(jsonb_build_object(''item_code'', ''N-200'', ''name'', ''Ok''), jsonb_build_object(''item_code'', ''N-200'', ''name'', ''Dup'')))', 'duplicate_code:%');
+select t.fails('select public.import_products(jsonb_build_array(jsonb_build_object(''item_code'', ''N-300'', ''name'', ''Fine''), jsonb_build_object(''item_code'', ''N-301'')))', 'invalid_row:%');
+select t.ok((select count(*) from public.products where item_code in ('N-200', 'N-300')) = 0, 'a failed import saves nothing (atomic)');
+select t.become(:sales::uuid);
+select t.fails('select public.import_products(''[]''::jsonb)', 'forbidden:%');
+select t.become(:wh::uuid);
+select t.fails('select public.import_products(''[]''::jsonb)', 'forbidden:%');
+select t.become(null, 'anon');
+select t.fails('select public.import_products(''[]''::jsonb)', 'permission denied%');
+
 -- 12. Books balance: received + adjustments - sold + returned = in stock --
 select t.become(:admin::uuid);
 select t.ok(
