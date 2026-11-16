@@ -72,11 +72,14 @@
     "from": "From",
     "to": "To",
     "quantity": "Quantity",
+    "displayQuantity": "Display quantity",
+    "warehouseQuantity": "Warehouse quantity",
     "counted": "Counted quantity",
     "note": "Note (optional)",
     "matrixTitle": "Stock matrix",
     "total": "Total",
     "empty": "No products are currently marked for sale.",
+    "receiveAllocationError": "Enter a valid total and make sure display + warehouse equals the total.",
     "locationNames": "en",
     "actions": {
       "receive_stock": {
@@ -175,7 +178,14 @@
       "codeTaken": "This item code already exists.",
       "barcodeTaken": "This barcode belongs to another product.",
       "badNumber": "Enter a valid number (0 or more)."
+      ,"derivedFromRate": "Calculated from USD × {rate}. Change the exchange rate to update all SYP prices."
     }
+    ,"exchangeRate": "Rate: {rate} SYP/USD"
+    ,"exchangeRatePrompt": "Enter SYP per USD exchange rate:"
+    ,"badExchangeRate": "Enter a positive exchange rate."
+    ,"clearCatalog": "Clear catalog + history"
+    ,"clearConfirm": "This permanently deletes all products, stock movements, sales and customers. Continue?"
+    ,"clearDone": "Cleared {count} products and all related history."
   },
   "import": {
     "title": "Import / Export",

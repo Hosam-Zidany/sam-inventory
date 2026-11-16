@@ -84,6 +84,11 @@ sales and warehouse see Products read-only. Admin and warehouse staff can receiv
 count stock; admin and sales staff can create sales. The database refuses unauthorized writes
 regardless of the UI.
 
+Admins can change the central SYP-per-USD rate from Products. SYP prices are recalculated from
+the USD price, and the Products screen also has a destructive “Clear catalog + history” action
+for starting over; it keeps staff accounts but removes products, stock, sales, customers and the
+receipt counter history.
+
 ## Host on GitHub Pages
 
 1. Push this repo to GitHub (public repo for the free plan).

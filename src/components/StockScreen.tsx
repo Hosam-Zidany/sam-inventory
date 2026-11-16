@@ -10,7 +10,18 @@ import { Alert, Button, Card, Field, Input, Select, Spinner } from './ui';
 type Location = { id: string; name_en: string; name_ar: string; sort_order: number };
 type StockRow = { product_id: string; location: string; qty: number };
 
-const EMPTY_FORM = { product: '', location: 'warehouse', from: 'warehouse', to: 'storage', qty: '', counted: '', note: '' };
+const EMPTY_FORM = {
+  product: '',
+  location: 'warehouse',
+  from: 'warehouse',
+  to: 'storage',
+  qty: '',
+  counted: '',
+  receiveTotal: '',
+  receiveDisplay: '',
+  receiveWarehouse: '',
+  note: '',
+};
 
 export default function StockScreen() {
   const t = useTranslations('stock');
@@ -58,26 +69,60 @@ export default function StockScreen() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function updateReceiveTotal(value: string) {
+    const total = Number(value);
+    const display = Number.isFinite(total) && total > 0 ? Math.min(1, Math.floor(total)) : 0;
+    setForm((current) => ({
+      ...current,
+      receiveTotal: value,
+      receiveDisplay: display ? String(display) : '',
+      receiveWarehouse: display ? String(Math.max(0, Math.floor(total) - display)) : '',
+    }));
+  }
+
   async function runAction(action: 'receive_stock' | 'transfer_stock' | 'stock_take') {
     setBusy(true);
     setError(null);
     setSuccess(null);
     const sb = getSupabase();
-    const qty = Number(action === 'stock_take' ? form.counted : form.qty);
-    const args =
-      action === 'receive_stock'
-        ? { p_product: form.product, p_location: form.location, p_qty: qty, p_note: form.note || null }
-        : action === 'transfer_stock'
+    let rpcError: { message: string } | null = null;
+    if (action === 'receive_stock') {
+      const total = Number(form.receiveTotal);
+      const display = Number(form.receiveDisplay);
+      const warehouse = Number(form.receiveWarehouse);
+      if (!Number.isInteger(total) || total <= 0 || !Number.isInteger(display) || !Number.isInteger(warehouse) || display < 0 || warehouse < 0 || display + warehouse !== total) {
+        setBusy(false);
+        setError(t('receiveAllocationError'));
+        return;
+      }
+      for (const [location, qty] of [['display', display], ['warehouse', warehouse]] as const) {
+        if (qty === 0) continue;
+        const result = await sb.rpc('receive_stock', {
+          p_product: form.product,
+          p_location: location,
+          p_qty: qty,
+          p_note: form.note || null,
+        });
+        if (result.error) {
+          rpcError = result.error;
+          break;
+        }
+      }
+    } else {
+      const qty = Number(action === 'stock_take' ? form.counted : form.qty);
+      const args =
+        action === 'transfer_stock'
           ? { p_product: form.product, p_from: form.from, p_to: form.to, p_qty: qty, p_note: form.note || null }
           : { p_product: form.product, p_location: form.location, p_counted: qty, p_note: form.note || null };
-    const { error: rpcError } = await sb.rpc(action, args);
+      rpcError = (await sb.rpc(action, args)).error;
+    }
     setBusy(false);
     if (rpcError) {
       setError(rpcError.message);
       return;
     }
     setSuccess(t(`actions.${action}.success`));
-    setForm((current) => ({ ...current, qty: '', counted: '', note: '' }));
+    setForm((current) => ({ ...current, qty: '', counted: '', receiveTotal: '', receiveDisplay: '', receiveWarehouse: '', note: '' }));
     await load();
   }
 
@@ -108,9 +153,12 @@ export default function StockScreen() {
             disabled={busy}
             onSubmit={() => void runAction('receive_stock')}
           >
-            <ProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
-            <LocationSelect locations={locations} value={form.location} onChange={(v) => update('location', v)} label={t('location')} />
-            <Field label={t('quantity')}><Input type="number" min="1" step="1" value={form.qty} onChange={(e) => update('qty', e.target.value)} required /></Field>
+            <SearchableProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
+            <Field label={t('quantity')}><Input type="number" min="1" step="1" value={form.receiveTotal} onChange={(e) => updateReceiveTotal(e.target.value)} required /></Field>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label={t('displayQuantity')}><Input type="number" min="0" step="1" value={form.receiveDisplay} onChange={(e) => update('receiveDisplay', e.target.value)} /></Field>
+              <Field label={t('warehouseQuantity')}><Input type="number" min="0" step="1" value={form.receiveWarehouse} onChange={(e) => update('receiveWarehouse', e.target.value)} /></Field>
+            </div>
             <Field label={t('note')}><Input value={form.note} onChange={(e) => update('note', e.target.value)} /></Field>
           </ActionCard>
 
@@ -120,7 +168,7 @@ export default function StockScreen() {
             disabled={busy}
             onSubmit={() => void runAction('transfer_stock')}
           >
-            <ProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
+            <SearchableProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
             <div className="grid grid-cols-2 gap-2">
               <LocationSelect locations={locations} value={form.from} onChange={(v) => update('from', v)} label={t('from')} />
               <LocationSelect locations={locations} value={form.to} onChange={(v) => update('to', v)} label={t('to')} />
@@ -135,7 +183,7 @@ export default function StockScreen() {
             disabled={busy}
             onSubmit={() => void runAction('stock_take')}
           >
-            <ProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
+            <SearchableProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
             <LocationSelect locations={locations} value={form.location} onChange={(v) => update('location', v)} label={t('location')} />
             <Field label={t('counted')}><Input type="number" min="0" step="1" value={form.counted} onChange={(e) => update('counted', e.target.value)} required /></Field>
             <Field label={t('note')}><Input value={form.note} onChange={(e) => update('note', e.target.value)} /></Field>
@@ -191,13 +239,25 @@ function ActionCard({ title, button, disabled, onSubmit, children }: { title: st
   );
 }
 
-function ProductSelect({ products, value, onChange, label }: { products: Product[]; value: string; onChange: (value: string) => void; label: string }) {
+function SearchableProductSelect({ products, value, onChange, label }: { products: Product[]; value: string; onChange: (value: string) => void; label: string }) {
+  const [query, setQuery] = useState('');
+  const selected = products.find((product) => product.id === value);
+  const filtered = products
+    .filter((product) => `${product.item_code} ${product.name} ${product.name_ar ?? ''}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
+    .slice(0, 12);
   return (
     <Field label={label}>
-      <Select value={value} onChange={(e) => onChange(e.target.value)} required>
-        <option value="">—</option>
-        {products.map((product) => <option key={product.id} value={product.id}>{product.item_code} — {product.name_ar || product.name}</option>)}
-      </Select>
+      <Input value={selected ? `${selected.item_code} — ${selected.name_ar || selected.name}` : query} onChange={(e) => { onChange(''); setQuery(e.target.value); }} placeholder={label} required={!value} />
+      {!value && query && (
+        <div className="max-h-44 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+          {filtered.map((product) => (
+            <button type="button" key={product.id} className="block min-h-11 w-full px-3 text-start text-sm hover:bg-slate-50" onClick={() => { onChange(product.id); setQuery(''); }}>
+              {product.item_code} — {product.name_ar || product.name}
+            </button>
+          ))}
+          {filtered.length === 0 && <p className="p-3 text-xs text-slate-500">—</p>}
+        </div>
+      )}
     </Field>
   );
 }

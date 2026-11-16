@@ -18,6 +18,7 @@ export default function ImportScreen() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [existing, setExisting] = useState<Product[] | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -29,7 +30,14 @@ export default function ImportScreen() {
 
   const reload = useCallback(async () => {
     try {
-      setExisting(await fetchAllProducts());
+      const sb = getSupabase();
+      const [productRows, rateResult] = await Promise.all([
+        fetchAllProducts(),
+        sb.from('app_settings').select('numeric_value').eq('key', 'usd_to_syp_rate').single(),
+      ]);
+      if (rateResult.error) throw rateResult.error;
+      setExisting(productRows);
+      setExchangeRate(Number(rateResult.data.numeric_value));
       setLoadError(null);
     } catch (e) {
       setLoadError(errorMessage(e));
@@ -57,7 +65,12 @@ export default function ImportScreen() {
     if (!plan || plan.payload.length === 0) return;
     setBusy(true);
     setFailure(null);
-    const { data, error } = await getSupabase().rpc('import_products', { p_rows: plan.payload });
+    const payload = plan.payload.map((row) => ({
+      ...row,
+      ...(row.price_usd == null ? {} : { price_syp: Math.round(row.price_usd * (exchangeRate ?? 1)) }),
+      ...(row.wireless_price_usd == null ? {} : { wireless_price_syp: Math.round(row.wireless_price_usd * (exchangeRate ?? 1)) }),
+    }));
+    const { data, error } = await getSupabase().rpc('import_products', { p_rows: payload });
     setBusy(false);
     if (error) {
       setFailure(error.message);
@@ -78,7 +91,7 @@ export default function ImportScreen() {
   }, [plan, filter]);
 
   if (loadError) return <Alert>{app('errorGeneric', { message: loadError })}</Alert>;
-  if (!existing) return <Spinner label={app('loading')} />;
+  if (!existing || exchangeRate == null) return <Spinner label={app('loading')} />;
 
   const importable = plan ? plan.counts.new + plan.counts.update : 0;
 

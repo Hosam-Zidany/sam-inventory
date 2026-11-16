@@ -16,6 +16,7 @@ export default function ProductsScreen() {
   const isAdmin = useRole() === 'admin';
 
   const [products, setProducts] = useState<Product[] | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -27,7 +28,14 @@ export default function ProductsScreen() {
 
   const load = useCallback(async () => {
     try {
-      setProducts(await fetchAllProducts());
+      const sb = getSupabase();
+      const [productRows, rateResult] = await Promise.all([
+        fetchAllProducts(),
+        sb.from('app_settings').select('numeric_value').eq('key', 'usd_to_syp_rate').single(),
+      ]);
+      if (rateResult.error) throw rateResult.error;
+      setProducts(productRows);
+      setExchangeRate(Number(rateResult.data.numeric_value));
       setLoadError(null);
     } catch (e) {
       setLoadError(errorMessage(e));
@@ -73,13 +81,47 @@ export default function ProductsScreen() {
   }
 
   if (loadError) return <Alert>{app('errorGeneric', { message: loadError })}</Alert>;
-  if (!products) return <Spinner label={app('loading')} />;
+  if (!products || exchangeRate == null) return <Spinner label={app('loading')} />;
+
+  async function changeRate() {
+    const raw = window.prompt(t('exchangeRatePrompt'), String(exchangeRate));
+    if (raw === null) return;
+    const rate = Number(raw);
+    if (!Number.isFinite(rate) || rate <= 0) {
+      setActionError(t('badExchangeRate'));
+      return;
+    }
+    const { error } = await getSupabase().rpc('set_usd_to_syp_rate', { p_rate: rate });
+    if (error) {
+      setActionError(app('errorGeneric', { message: error.message }));
+      return;
+    }
+    await load();
+  }
+
+  async function clearCatalog() {
+    if (!window.confirm(t('clearConfirm'))) return;
+    setActionError(null);
+    const { data, error } = await getSupabase().rpc('clear_catalog_and_history');
+    if (error) {
+      setActionError(app('errorGeneric', { message: error.message }));
+      return;
+    }
+    setProducts([]);
+    setActionError(t('clearDone', { count: data }));
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="me-auto text-2xl font-bold">{t('title')}</h1>
-        {isAdmin && <Button onClick={() => setEditing('new')}>{t('add')}</Button>}
+        {isAdmin && (
+          <>
+            <Button variant="secondary" onClick={() => void changeRate()}>{t('exchangeRate', { rate: exchangeRate })}</Button>
+            <Button variant="danger" onClick={() => void clearCatalog()}>{t('clearCatalog')}</Button>
+            <Button onClick={() => setEditing('new')}>{t('add')}</Button>
+          </>
+        )}
       </div>
 
       {!isAdmin && <Alert tone="blue">{t('readOnly')}</Alert>}
@@ -194,6 +236,7 @@ export default function ProductsScreen() {
         <ProductForm
           product={editing === 'new' ? null : editing}
           categories={categories}
+          exchangeRate={exchangeRate}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);

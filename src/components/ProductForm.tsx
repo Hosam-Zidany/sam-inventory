@@ -10,6 +10,7 @@ interface Props {
   /** null = add a new product */
   product: Product | null;
   categories: string[];
+  exchangeRate: number;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -46,7 +47,7 @@ const initial = (p: Product | null): FormState => ({
 
 const isNumber = (s: string) => /^\d+(\.\d+)?$/.test(s.trim());
 
-export default function ProductForm({ product, categories, onClose, onSaved }: Props) {
+export default function ProductForm({ product, categories, exchangeRate, onClose, onSaved }: Props) {
   const t = useTranslations('products.form');
   const app = useTranslations('app');
   const [f, setF] = useState<FormState>(() => initial(product));
@@ -54,7 +55,24 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
   const [serverError, setServerError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((s) => ({ ...s, [k]: v }));
+  const set = (k: keyof FormState, v: string | boolean) =>
+    setF((s) => {
+      if (k === 'for_sale') return { ...s, for_sale: Boolean(v) };
+      const text = typeof v === 'string' ? v : String(v);
+      if (k === 'price_usd') {
+        const usd = Number(text);
+        return { ...s, price_usd: text, price_syp: Number.isFinite(usd) ? String(Math.round(usd * exchangeRate)) : s.price_syp };
+      }
+      if (k === 'wireless_price_usd') {
+        const usd = Number(text);
+        return {
+          ...s,
+          wireless_price_usd: text,
+          wireless_price_syp: text === '' ? '' : Number.isFinite(usd) ? String(Math.round(usd * exchangeRate)) : s.wireless_price_syp,
+        };
+      }
+      return { ...s, [k]: text };
+    });
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -134,14 +152,14 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
           <Field label={t('priceUsd')} error={errors.price_usd}>
             <Input value={f.price_usd} onChange={(e) => set('price_usd', e.target.value)} className="ltr-field" inputMode="decimal" />
           </Field>
-          <Field label={t('priceSyp')} error={errors.price_syp}>
-            <Input value={f.price_syp} onChange={(e) => set('price_syp', e.target.value)} className="ltr-field" inputMode="numeric" />
+          <Field label={t('priceSyp')} error={errors.price_syp} hint={t('derivedFromRate', { rate: exchangeRate })}>
+            <Input value={f.price_syp} readOnly className="ltr-field bg-slate-100" inputMode="numeric" />
           </Field>
           <Field label={t('wirelessUsd')} error={errors.wireless_price_usd} hint={t('wirelessHint')}>
             <Input value={f.wireless_price_usd} onChange={(e) => set('wireless_price_usd', e.target.value)} className="ltr-field" inputMode="decimal" />
           </Field>
           <Field label={t('wirelessSyp')} error={errors.wireless_price_syp}>
-            <Input value={f.wireless_price_syp} onChange={(e) => set('wireless_price_syp', e.target.value)} className="ltr-field" inputMode="numeric" />
+            <Input value={f.wireless_price_syp} readOnly className="ltr-field bg-slate-100" inputMode="numeric" />
           </Field>
           <Field label={t('specs')} className="sm:col-span-2">
             <Input value={f.specs} onChange={(e) => set('specs', e.target.value)} />
