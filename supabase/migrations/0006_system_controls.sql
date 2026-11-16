@@ -66,7 +66,9 @@ begin
     public.products
     restart identity cascade;
 
-  update public.receipt_counter set last_number = 1000;
+  update public.receipt_counter
+  set last_number = 1000
+  where singleton = true;
   return v_count;
 end;
 $$;

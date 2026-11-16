@@ -249,7 +249,9 @@ begin
   end if;
 
   -- Gap-free receipt number (rolls back with the sale if anything below fails).
-  update public.receipt_counter set last_number = last_number + 1
+  update public.receipt_counter
+  set last_number = last_number + 1
+  where singleton = true
   returning last_number into v_number;
   v_receipt := 'R-' || v_number;
 
