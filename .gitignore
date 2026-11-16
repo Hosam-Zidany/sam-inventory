@@ -9,3 +9,5 @@ supabase/.branches/
 supabase/.temp/
 *.log
 .DS_Store
+tsconfig.tsbuildinfo
+next-env.d.ts

@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/cairo/index.css';
+
+@theme {
+  --font-sans: 'Cairo Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #eef6ff;
+  --color-brand-100: #d9eaff;
+  --color-brand-500: #2f7de1;
+  --color-brand-600: #1b64c8;
+  --color-brand-700: #164fa0;
+  --color-brand-900: #10325f;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-slate-50 font-sans text-slate-900 antialiased;
+  }
+  /* Prices, codes and barcodes stay left-to-right even inside Arabic text. */
+  .ltr-field {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+}

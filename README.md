@@ -3,8 +3,12 @@
 Bilingual (English / Arabic, RTL) inventory and digital-receipt app for SAM Company.
 Stack: Next.js + Tailwind/shadcn · Supabase (Postgres, Auth, RLS) · Vercel.
 
-**Status: build step 1 of 6 — database, roles, RLS.** The Next.js app starts in step 2;
-the one-command local run arrives with it.
+**Status: build steps 1–2 of 6 done** — database, roles, RLS (step 1); app shell, login,
+Products screen and CSV import (step 2). Stock, sales/receipts, dashboard/reports and
+PWA/barcode follow.
+
+The app is a **static export** (no server of its own): the browser talks straight to Supabase,
+and every rule is enforced by Postgres. That is what lets it be hosted free on GitHub Pages.
 
 ## What is in step 1
 
@@ -14,11 +18,15 @@ supabase/
     0001_schema.sql      tables, derived stock view, append-only triggers
     0002_functions.sql   receive_stock, transfer_stock, stock_take, complete_sale, cancel_sale
     0003_rls.sql         grants + row-level security per role
+    0004_import_products.sql  atomic catalog import (admin only)
   seed.sql               local-dev placeholder products (never run on db push)
   tests/
     00_local_shim.sql    stand-in for Supabase's auth schema, for plain Postgres
-    acceptance.sql       61 checks, runs in a transaction and rolls back
+    acceptance.sql       70 checks, runs in a transaction and rolls back
 scripts/test-db.sh       builds a scratch DB, applies everything, runs the tests
+src/                     Next.js app (i18n ar/en, auth, Products, Import)
+messages/                en.json + ar.json (npm run check:i18n keeps them in sync)
+.github/workflows/       ci.yml (checks) + deploy.yml (GitHub Pages)
 ```
 
 ## Setup
@@ -39,7 +47,39 @@ scripts/test-db.sh       builds a scratch DB, applies everything, runs the tests
    After that, admins manage roles from the app (`role` is `admin`, `sales` or `warehouse`).
    To lock someone out, set `active = false` rather than deleting the row.
 
+## Run the app locally
+
+```bash
+cp .env.example .env.local      # fill in your Supabase URL + anon key
+npm install
+npm run dev                     # http://localhost:3000  (redirects to /ar/)
+```
+
+Sign in with a user you gave a role (see Setup, step 3). Admin sees Products and Import / Export;
+sales and warehouse see Products read-only (the database refuses their writes regardless of the UI).
+
+## Host on GitHub Pages
+
+1. Push this repo to GitHub (public repo for the free plan).
+2. **Settings → Pages → Source: GitHub Actions.**
+3. **Settings → Secrets and variables → Actions → Variables** → add
+   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+   These are *variables*, not secrets: the anon key is public by design and ships in the browser.
+   Never put the `service_role` key anywhere in this repo.
+4. Push to `main`. The workflow runs all tests, builds, and publishes to
+   `https://<user>.github.io/<repo>/`. Add `NEXT_PUBLIC_BASE_PATH` as a variable only for a custom domain (set it empty).
+5. In Supabase → **Authentication → URL Configuration**, add the site URL above.
+
 ## Run the tests
+
+```bash
+npm test               # import/validation logic (28 tests)
+npm run typecheck
+npm run check:i18n
+scripts/test-db.sh     # database acceptance tests (needs DATABASE_URL, see below)
+```
+
+Database tests:
 
 Needs any PostgreSQL 15+ server where you can create databases (not your Supabase project).
 
@@ -72,6 +112,7 @@ Expected last line: `ALL ACCEPTANCE TESTS PASSED`.
 | `stock_take(product, location, counted, note)` | admin, warehouse | writes the up/down adjustment; no difference → no row |
 | `complete_sale(currency, tier, sold_from, items, customer_id, customer_name, client_ref)` | admin, sales | `items = [{"product_id": "...", "qty": 2}]`; `client_ref` (a UUID made on the phone) makes offline retries safe |
 | `cancel_sale(sale_id, reason)` | admin | returns the units to where they left |
+| `import_products(rows)` | admin | all-or-nothing upsert by `item_code`; keys missing from a row are left untouched |
 
 Errors start with a code before the colon so the UI can translate them:
 `insufficient_stock` (the `DETAIL` lists every short item as JSON), `not_for_sale`, `no_price`,
@@ -95,6 +136,15 @@ Errors start with a code before the colon so the UI can translate them:
 7. The spec's acceptance example ("receive 10 → transfer 6 → transfer 4 → sell 2 shows 2/2/2")
    doesn't add up: 10 received and 2 sold leaves 8, not 6. The test uses
    warehouse→storage 6, then storage→display 4, then sells 2 from display → warehouse 4 / storage 2 / display 2.
+
+## Import behaviour (step 2)
+
+- Both CSV formats from the spec are detected from the header row; UTF-8 and Windows-1256 (Arabic Excel) files both work, as do `;`-separated files.
+- Preview first, nothing is saved until **Import**. Rows without a code/name, duplicate codes or barcodes in the file, and barcodes already owned by another product are **skipped** and shown in red.
+- Warnings (imported, but check them): SYP/USD ratio more than 15% from the file's median; wireless price higher than general; prices that are text (`ضمن الطقم`, `طقم مع الصحن (65700)`) are stored as "no standalone price" (general 0, wireless empty); barcodes ruined by Excel's scientific notation are dropped.
+- The PDF format has one column for code *and* name, so the code is used as the name; add `name_ar` later with the template. A length such as `305m` in `Unit_or_Length` goes to Specs, not Unit.
+- The PDF format never changes `for_sale`: re-importing a price list will not switch products on or off.
+- Only changed fields are sent for existing products, so an import cannot overwrite things like barcode or Arabic name unless the file says so.
 
 ## Notes for later steps
 

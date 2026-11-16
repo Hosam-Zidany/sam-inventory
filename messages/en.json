@@ -1,0 +1,169 @@
+{
+  "app": {
+    "name": "SAM Inventory",
+    "company": "SAM Company",
+    "loading": "Loading…",
+    "language": "العربية",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "errorGeneric": "Something went wrong: {message}",
+    "notConfigured": "The app is not connected to Supabase yet. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY and rebuild."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "import": "Import / Export",
+    "newSale": "New sale",
+    "stock": "Stock",
+    "movements": "Movements",
+    "reports": "Reports",
+    "signOut": "Sign out",
+    "menu": "Menu"
+  },
+  "roles": {
+    "admin": "Admin",
+    "sales": "Sales",
+    "warehouse": "Warehouse"
+  },
+  "login": {
+    "title": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "failed": "Sign-in failed: {message}"
+  },
+  "noRole": {
+    "title": "No access yet",
+    "body": "You are signed in as {email}, but the administrator has not given this account a role. Ask them to add you."
+  },
+  "forbidden": {
+    "title": "Not allowed",
+    "body": "Your role ({role}) does not include this screen."
+  },
+  "home": {
+    "welcome": "Welcome",
+    "soon": "The next screens (stock, sales, reports) arrive in the following build steps.",
+    "openProducts": "Open products"
+  },
+  "products": {
+    "title": "Products",
+    "search": "Search name, code or barcode…",
+    "allCategories": "All categories",
+    "showDeleted": "Show deleted",
+    "add": "Add product",
+    "count": "{shown} of {total} products",
+    "empty": "No products match.",
+    "emptyCatalog": "The catalog is empty. Import your price list from Import / Export, or add a product.",
+    "cols": {
+      "code": "Code",
+      "name": "Name",
+      "category": "Category",
+      "unit": "Unit",
+      "usd": "USD",
+      "syp": "SYP",
+      "wirelessUsd": "Wireless USD",
+      "wirelessSyp": "Wireless SYP",
+      "forSale": "For sale",
+      "actions": "Actions"
+    },
+    "forSale": "For sale",
+    "notForSale": "Not for sale",
+    "deleted": "Deleted",
+    "edit": "Edit",
+    "delete": "Delete",
+    "restore": "Restore",
+    "toggleFailed": "Could not change For Sale: {message}",
+    "readOnly": "You can view the catalog. Only an admin can change it.",
+    "deleteTitle": "Delete this product?",
+    "deleteBody": "{name} will be hidden from the catalog and the sale screen. Its history is kept and you can restore it later.",
+    "form": {
+      "addTitle": "Add product",
+      "editTitle": "Edit product",
+      "itemCode": "Item code",
+      "name": "Name",
+      "nameAr": "Arabic name",
+      "category": "Category",
+      "unit": "Unit",
+      "specs": "Specs",
+      "priceUsd": "Price USD",
+      "priceSyp": "Price SYP",
+      "wirelessUsd": "Wireless price USD",
+      "wirelessSyp": "Wireless price SYP",
+      "wirelessHint": "Leave empty when there is no separate wireless price.",
+      "barcode": "Barcode",
+      "forSale": "Available in the sale screen",
+      "required": "Required",
+      "codeTaken": "This item code already exists.",
+      "barcodeTaken": "This barcode belongs to another product.",
+      "badNumber": "Enter a valid number (0 or more)."
+    }
+  },
+  "import": {
+    "title": "Import / Export",
+    "adminOnly": "Import and export are for admins only.",
+    "chooseFile": "Choose a CSV file",
+    "chooseHint": "Accepts the price-list extraction format or the simple template. The format is detected automatically. Nothing is saved until you press Import.",
+    "template": "Download blank template",
+    "export": "Export catalog (CSV)",
+    "reading": "Reading file…",
+    "format": {
+      "pdf": "Format: price-list extraction",
+      "template": "Format: simple template"
+    },
+    "summary": "{new} new · {update} updated · {unchanged} unchanged · {skipped} skipped",
+    "warningsCount": "{count} rows have warnings. They will still be imported — please check them.",
+    "medianRatio": "Typical SYP per USD in this file: {ratio}",
+    "button": "Import {count} rows",
+    "nothing": "Nothing to import.",
+    "importing": "Importing…",
+    "done": "Imported: {inserted} new, {updated} updated.",
+    "failed": "Import failed, nothing was saved: {message}",
+    "another": "Import another file",
+    "filter": {
+      "all": "All",
+      "issues": "With issues",
+      "skipped": "Skipped"
+    },
+    "cols": {
+      "line": "Line",
+      "status": "Status",
+      "code": "Code",
+      "name": "Name",
+      "usd": "USD",
+      "syp": "SYP",
+      "wireless": "Wireless",
+      "notes": "Notes"
+    },
+    "status": {
+      "new": "New",
+      "update": "Update",
+      "unchanged": "Unchanged",
+      "skipped": "Skipped"
+    },
+    "errors": {
+      "empty_file": "The file has no data rows.",
+      "unknown_format": "Unrecognized columns. The first row must contain either \"item_code\" (template) or \"Item_Code_or_Name\" (price-list extraction)."
+    },
+    "issue": {
+      "missing_code": "Missing item code — skipped",
+      "missing_name": "Missing name — skipped",
+      "duplicate_code": "Duplicate of line {firstLine} — skipped",
+      "duplicate_barcode": "Same barcode as line {firstLine} — skipped",
+      "barcode_in_use": "Barcode already used by {code} — skipped",
+      "barcode_mangled": "Barcode \"{text}\" was damaged by a spreadsheet (scientific notation) — barcode ignored",
+      "ratio": "Odd {tier} price ratio: {ratio} SYP/USD is {pct}% from the typical {median}",
+      "wireless_higher": "Wireless price {wireless} is higher than general price {general} ({currency})",
+      "no_standalone_price": "{field}: \"{text}\" is not a price — no standalone price",
+      "bad_number": "{field}: \"{text}\" is not a number — ignored",
+      "bad_for_sale": "for_sale: \"{text}\" is not true/false — ignored",
+      "inactive_match": "Matches a deleted product — it will be updated but stays deleted"
+    },
+    "tier": {
+      "general": "general",
+      "wireless": "wireless"
+    }
+  }
+}
