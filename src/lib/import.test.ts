@@ -261,6 +261,15 @@ describe('planImport — template format', () => {
     expect(p.rows[0].status).toBe('skipped');
     expect(p.rows[0].issues[0].kind).toBe('missing_name');
   });
+
+  it('generates unique codes when the code column is empty', () => {
+    const p = plan(
+      [header, ',Router A,,,,40,600000,,,,', ',Router B,,,,50,750000,,,,'].join('\n'),
+      [existing({ item_code: 'AUTO-0001' })],
+    );
+    expect(p.rows.map((r) => r.item_code)).toEqual(['AUTO-0002', 'AUTO-0003']);
+    expect(p.rows.map((r) => r.status)).toEqual(['new', 'new']);
+  });
 });
 
 describe('planImport — bad files', () => {

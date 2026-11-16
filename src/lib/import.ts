@@ -140,6 +140,15 @@ export function median(nums: number[]): number | null {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
+function nextGeneratedCode(used: Set<string>, nextNumber: { value: number }): string {
+  let code = '';
+  do {
+    code = `AUTO-${String(nextNumber.value++).padStart(4, '0')}`;
+  } while (used.has(code));
+  used.add(code);
+  return code;
+}
+
 // ---------------------------------------------------------------------------
 // Row mapping
 
@@ -288,6 +297,12 @@ export function planImport(text: string, existing: ExistingProduct[]): PlanResul
 
   const firstLineOfCode = new Map<string, number>();
   const firstLineOfBarcode = new Map<string, number>();
+  const usedCodes = new Set(byCode.keys());
+  const nextAutoNumber = { value: 1 };
+  for (const code of usedCodes) {
+    const match = /^AUTO-(\d+)$/.exec(code);
+    if (match) nextAutoNumber.value = Math.max(nextAutoNumber.value, Number(match[1]) + 1);
+  }
   const rows: PlannedRow[] = [];
 
   parsed.data.forEach((cells, i) => {
@@ -295,6 +310,7 @@ export function planImport(text: string, existing: ExistingProduct[]): PlanResul
     const mapped =
       format === 'pdf' ? mapPdfRow(cells) : format === 'section' ? mapSectionRow(cells) : mapTemplateRow(cells, headerSet);
     const issues = [...mapped.issues];
+    if (!mapped.item_code && format !== 'pdf') mapped.item_code = nextGeneratedCode(usedCodes, nextAutoNumber);
 
     if (!mapped.item_code) issues.push({ kind: 'missing_code', severity: 'error' });
     else if (!mapped.name) issues.push({ kind: 'missing_name', severity: 'error' });

@@ -171,6 +171,7 @@ Errors start with a code before the colon so the UI can translate them:
 ## Import behaviour (step 2)
 
 - Both CSV formats from the spec are detected from the header row; UTF-8 and Windows-1256 (Arabic Excel) files both work, as do `;`-separated files.
+- Item codes may be left blank in the simple and Price List / Section templates; the importer assigns unique `AUTO-0001`-style codes. Exported catalogs always include the assigned codes so they can be re-imported safely.
 - Preview first, nothing is saved until **Import**. Rows without a code/name, duplicate codes or barcodes in the file, and barcodes already owned by another product are **skipped** and shown in red.
 - Warnings (imported, but check them): SYP/USD ratio more than 15% from the file's median; wireless price higher than general; prices that are text (`ضمن الطقم`, `طقم مع الصحن (65700)`) are stored as "no standalone price" (general 0, wireless empty); barcodes ruined by Excel's scientific notation are dropped.
 - The PDF format has one column for code *and* name, so the code is used as the name; add `name_ar` later with the template. A length such as `305m` in `Unit_or_Length` goes to Specs, not Unit.
