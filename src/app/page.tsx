@@ -13,7 +13,8 @@ export default function RootRedirect() {
         return null;
       }
     })();
-    const locale = saved === 'en' || saved === 'ar' ? saved : navigator.language.startsWith('en') ? 'en' : 'ar';
+    // Arabic unless the user switched to English before (remembered by the language switch).
+    const locale = saved === 'en' ? 'en' : 'ar';
     window.location.replace(`${base}/${locale}/`);
   }, [base]);
   return (

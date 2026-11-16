@@ -9,8 +9,7 @@
     "close": "Close",
     "yes": "Yes",
     "no": "No",
-    "errorGeneric": "Something went wrong: {message}",
-    "notConfigured": "The app is not connected to Supabase yet. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY and rebuild."
+    "errorGeneric": "Something went wrong: {message}"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -37,7 +36,11 @@
   },
   "noRole": {
     "title": "No access yet",
-    "body": "You are signed in as {email}, but the administrator has not given this account a role. Ask them to add you."
+    "body": "You are signed in as {email}, but the administrator has not given this account a role. Ask them to add you.",
+    "claimTitle": "Are you the owner?",
+    "claimBody": "This project has no administrator yet. If you set it up, make yourself the first admin. This button disappears once an admin exists.",
+    "claimName": "Your name (optional)",
+    "claimButton": "Make me the admin"
   },
   "forbidden": {
     "title": "Not allowed",
@@ -164,6 +167,20 @@
     "tier": {
       "general": "general",
       "wireless": "wireless"
+    }
+  },
+  "setup": {
+    "title": "Connect to your database",
+    "intro": "This site has not been connected to Supabase yet. Paste the two values from Supabase → Project Settings → API. They are saved in this browser only.",
+    "url": "Project URL",
+    "urlHint": "Looks like https://abcdxyz.supabase.co",
+    "key": "Publishable / anon key",
+    "keyHint": "The PUBLIC key (anon or publishable). Never paste the secret / service_role key.",
+    "save": "Save and continue",
+    "problem": {
+      "bad_url": "That is not a valid https address.",
+      "empty_key": "Paste the anon / publishable key.",
+      "secret_key": "That is a SECRET key. Do not use it here: it bypasses all security. Use the anon / publishable key instead."
     }
   }
 }

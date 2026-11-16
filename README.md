@@ -10,6 +10,28 @@ PWA/barcode follow.
 The app is a **static export** (no server of its own): the browser talks straight to Supabase,
 and every rule is enforced by Postgres. That is what lets it be hosted free on GitHub Pages.
 
+## Quick start — everything from a phone browser (no laptop)
+
+1. **GitHub → repo → Settings → Pages → Build and deployment → Source: GitHub Actions.**
+   Then **Actions → "Deploy to GitHub Pages" → Run workflow** (or just push). The site goes live at
+   `https://<user>.github.io/<repo>/` (about 2 minutes).
+2. **supabase.com → New project** (note the database password; any region near you).
+3. In the project: **SQL Editor → New query**, paste the whole of [`supabase/setup.sql`](supabase/setup.sql), **Run**.
+4. **Authentication → Users → Add user → Create new user**, enter your email + a password, tick *Auto Confirm User*.
+   **Authentication → Sign In / Providers → Email → turn OFF "Allow new users to sign up"** so strangers cannot create accounts.
+5. **Project Settings → API** → copy the **Project URL** and the **anon / publishable key** (never the secret / service_role key).
+6. Open your site → paste both values on the setup screen → sign in with the user from step 4 →
+   press **"Make me the admin"** (shown only while the project has no admin).
+7. **Import / Export** → upload your catalog CSV.
+
+More staff: Authentication → Add user, then in the SQL editor
+`insert into public.staff_roles (user_id, role) select id, 'sales' from auth.users where email = 'x@y.com';`
+(roles: `admin`, `sales`, `warehouse`). An in-app user manager comes in a later step.
+
+The connection values are saved in the browser you used (the anon key is public by design; row-level
+security is what protects the data). Alternatively set the repo variables `NEXT_PUBLIC_SUPABASE_URL` /
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` once and every browser is pre-connected.
+
 ## What is in step 1
 
 ```
@@ -19,10 +41,12 @@ supabase/
     0002_functions.sql   receive_stock, transfer_stock, stock_take, complete_sale, cancel_sale
     0003_rls.sql         grants + row-level security per role
     0004_import_products.sql  atomic catalog import (admin only)
+    0005_claim_first_admin.sql  first signed-in user may become admin, only while none exists
+  setup.sql              all migrations in one paste-able file (scripts/build-setup-sql.sh)
   seed.sql               local-dev placeholder products (never run on db push)
   tests/
     00_local_shim.sql    stand-in for Supabase's auth schema, for plain Postgres
-    acceptance.sql       70 checks, runs in a transaction and rolls back
+    acceptance.sql       71 checks, runs in a transaction and rolls back
 scripts/test-db.sh       builds a scratch DB, applies everything, runs the tests
 src/                     Next.js app (i18n ar/en, auth, Products, Import)
 messages/                en.json + ar.json (npm run check:i18n keeps them in sync)
@@ -62,10 +86,10 @@ sales and warehouse see Products read-only (the database refuses their writes re
 
 1. Push this repo to GitHub (public repo for the free plan).
 2. **Settings → Pages → Source: GitHub Actions.**
-3. **Settings → Secrets and variables → Actions → Variables** → add
-   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-   These are *variables*, not secrets: the anon key is public by design and ships in the browser.
-   Never put the `service_role` key anywhere in this repo.
+3. *(Optional)* **Settings → Secrets and variables → Actions → Variables** → add
+   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to pre-connect every browser.
+   Without them the site shows a setup screen instead. These are *variables*, not secrets: the anon key
+   is public by design and ships in the browser. Never put the `service_role` key anywhere.
 4. Push to `main`. The workflow runs all tests, builds, and publishes to
    `https://<user>.github.io/<repo>/`. Add `NEXT_PUBLIC_BASE_PATH` as a variable only for a custom domain (set it empty).
 5. In Supabase → **Authentication → URL Configuration**, add the site URL above.
@@ -73,7 +97,7 @@ sales and warehouse see Products read-only (the database refuses their writes re
 ## Run the tests
 
 ```bash
-npm test               # import/validation logic (28 tests)
+npm test               # import/validation logic (31 tests)
 npm run typecheck
 npm run check:i18n
 scripts/test-db.sh     # database acceptance tests (needs DATABASE_URL, see below)

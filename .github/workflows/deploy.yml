@@ -35,20 +35,14 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run check:i18n
+      - run: scripts/build-setup-sql.sh --check
       - name: Database acceptance tests
         run: scripts/test-db.sh
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-      - name: Fail early if Supabase settings are missing
-        run: |
-          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
-            echo "::error::Set repository VARIABLES NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (Settings > Secrets and variables > Actions > Variables)."
-            exit 1
-          fi
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - name: Build static site
+        # The two variables are OPTIONAL. Without them the site shows a setup screen
+        # where the Supabase URL + anon key are pasted in the browser.
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}

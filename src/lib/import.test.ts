@@ -4,6 +4,7 @@ import { searchKey } from './text';
 import { catalogCsv, templateCsv } from './csv';
 import { detectFormat, median, normalizeHeader, parseBool, planImport, type ExistingProduct } from './import';
 import type { Product } from './types';
+import { validateConfig } from './supabase';
 
 const PDF_HEADER =
   'Source_Group,Category,Item_Code_or_Name,Unit_or_Length,Specs_or_Resolution,Price_USD,Price_SYP,Wireless_Customer_Price_USD,Wireless_Customer_Price_SYP,Duplicate_Status,Sources';
@@ -267,5 +268,22 @@ describe('CSV export / template', () => {
     const ex = existing({ ...p });
     const result = plan(csv, [ex]);
     expect(result.counts).toEqual({ new: 0, update: 0, unchanged: 1, skipped: 0 });
+  });
+});
+
+describe('validateConfig (setup screen)', () => {
+  const jwt = (role: string) => `h.${btoa(JSON.stringify({ role }))}.s`;
+  it('accepts an https URL with an anon key', () => {
+    expect(validateConfig('https://abc.supabase.co', jwt('anon'))).toBeNull();
+    expect(validateConfig(' https://abc.supabase.co/ ', 'sb_publishable_abc')).toBeNull();
+  });
+  it('refuses secret / service_role keys', () => {
+    expect(validateConfig('https://abc.supabase.co', jwt('service_role'))).toBe('secret_key');
+    expect(validateConfig('https://abc.supabase.co', 'sb_secret_abc')).toBe('secret_key');
+  });
+  it('refuses bad URLs and empty keys', () => {
+    expect(validateConfig('abc.supabase.co', jwt('anon'))).toBe('bad_url');
+    expect(validateConfig('http://abc.supabase.co', jwt('anon'))).toBe('bad_url');
+    expect(validateConfig('https://abc.supabase.co', '  ')).toBe('empty_key');
   });
 });

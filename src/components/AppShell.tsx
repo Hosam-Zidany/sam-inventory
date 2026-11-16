@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth';
+import { getSupabase } from '@/lib/supabase';
 import type { Role } from '@/lib/types';
-import { Alert, Button, Card, Spinner, cx } from './ui';
+import { Alert, Button, Card, Input, Spinner, cx } from './ui';
 import LoginForm from './LoginForm';
+import SetupScreen from './SetupScreen';
 
 /** Menu entries per role. This only decides what is SHOWN; Postgres decides what is ALLOWED. */
 const NAV: Array<{ href: string; key: string; roles: Role[] }> = [
@@ -20,13 +22,7 @@ export function RequireRole({ roles, children }: { roles?: Role[]; children: Rea
   const { state } = useAuth();
 
   if (state.status === 'loading') return <Spinner label={t('app.loading')} />;
-  if (state.status === 'unconfigured') {
-    return (
-      <div className="mx-auto max-w-lg p-6">
-        <Alert tone="amber">{t('app.notConfigured')}</Alert>
-      </div>
-    );
-  }
+  if (state.status === 'unconfigured') return <SetupScreen />;
   if (state.status === 'signed_out') return <LoginForm />;
   if (state.role === null) {
     return <NoRole email={state.user.email ?? ''} />;
@@ -46,11 +42,48 @@ export function RequireRole({ roles, children }: { roles?: Role[]; children: Rea
 function NoRole({ email }: { email: string }) {
   const t = useTranslations();
   const { signOut } = useAuth();
+  const [canClaim, setCanClaim] = useState(false);
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Only a project with no admin at all offers the claim button.
+  useEffect(() => {
+    let alive = true;
+    getSupabase()
+      .rpc('needs_first_admin')
+      .then(({ data }) => alive && setCanClaim(data === true));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function claim() {
+    setBusy(true);
+    setError(null);
+    const { data, error: err } = await getSupabase().rpc('claim_first_admin', { p_full_name: name.trim() || null });
+    setBusy(false);
+    if (err) setError(err.message);
+    else if (data === true) window.location.reload();
+    else setCanClaim(false); // someone else got there first
+  }
+
   return (
     <div className="mx-auto mt-16 max-w-md px-4">
       <Card className="space-y-4 p-6">
         <h1 className="text-xl font-bold">{t('noRole.title')}</h1>
         <p className="text-sm text-slate-600">{t('noRole.body', { email })}</p>
+        {canClaim && (
+          <div className="space-y-3 rounded-lg border border-brand-100 bg-brand-50 p-4">
+            <p className="text-sm font-semibold text-brand-900">{t('noRole.claimTitle')}</p>
+            <p className="text-xs text-slate-600">{t('noRole.claimBody')}</p>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('noRole.claimName')} aria-label={t('noRole.claimName')} />
+            {error && <Alert>{t('app.errorGeneric', { message: error })}</Alert>}
+            <Button onClick={claim} disabled={busy} className="w-full">
+              {t('noRole.claimButton')}
+            </Button>
+          </div>
+        )}
         <Button variant="secondary" onClick={signOut}>
           {t('nav.signOut')}
         </Button>

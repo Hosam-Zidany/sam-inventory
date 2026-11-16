@@ -9,8 +9,7 @@
     "close": "إغلاق",
     "yes": "نعم",
     "no": "لا",
-    "errorGeneric": "حدث خطأ: {message}",
-    "notConfigured": "التطبيق غير متصل بـ Supabase بعد. اضبط NEXT_PUBLIC_SUPABASE_URL و NEXT_PUBLIC_SUPABASE_ANON_KEY ثم أعد البناء."
+    "errorGeneric": "حدث خطأ: {message}"
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -37,7 +36,11 @@
   },
   "noRole": {
     "title": "لا توجد صلاحية بعد",
-    "body": "سجّلت الدخول بالحساب {email}، لكن المدير لم يمنح هذا الحساب أي دور. اطلب منه إضافتك."
+    "body": "سجّلت الدخول بالحساب {email}، لكن المدير لم يمنح هذا الحساب أي دور. اطلب منه إضافتك.",
+    "claimTitle": "هل أنت مالك النظام؟",
+    "claimBody": "هذا المشروع بلا مدير بعد. إن كنت من أعدّه فاجعل نفسك أول مدير. يختفي هذا الزر بمجرد وجود مدير.",
+    "claimName": "اسمك (اختياري)",
+    "claimButton": "اجعلني المدير"
   },
   "forbidden": {
     "title": "غير مسموح",
@@ -164,6 +167,20 @@
     "tier": {
       "general": "العام",
       "wireless": "الوايرلس"
+    }
+  },
+  "setup": {
+    "title": "الاتصال بقاعدة البيانات",
+    "intro": "لم يُربط هذا الموقع بـ Supabase بعد. الصق القيمتين من Supabase ← Project Settings ← API. تُحفظان في هذا المتصفح فقط.",
+    "url": "رابط المشروع",
+    "urlHint": "يشبه https://abcdxyz.supabase.co",
+    "key": "المفتاح العام (anon / publishable)",
+    "keyHint": "المفتاح العام فقط. لا تلصق أبداً المفتاح السري (service_role).",
+    "save": "حفظ ومتابعة",
+    "problem": {
+      "bad_url": "هذا ليس عنوان https صحيحاً.",
+      "empty_key": "الصق المفتاح العام (anon / publishable).",
+      "secret_key": "هذا مفتاح سري! لا تستخدمه هنا لأنه يتجاوز كل الحماية. استخدم المفتاح العام (anon / publishable)."
     }
   }
 }

@@ -21,6 +21,7 @@ for f in "$root"/supabase/migrations/*.sql; do
   echo "applying $(basename "$f")"
   run -f "$f"
 done
+run -f "$root/supabase/tests/bootstrap.sql"      # needs a database with no staff yet
 run -f "$root/supabase/seed.sql"          # the dev seed must load cleanly too
 run -c "delete from public.kit_components; delete from public.products;"   # tests need a clean catalog
 run -f "$root/supabase/tests/acceptance.sql"

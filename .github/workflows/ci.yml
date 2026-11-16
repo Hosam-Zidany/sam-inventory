@@ -26,6 +26,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run check:i18n
+      - run: scripts/build-setup-sql.sh --check
       - name: Database acceptance tests
         run: scripts/test-db.sh
         env:
