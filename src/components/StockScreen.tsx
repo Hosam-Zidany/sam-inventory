@@ -56,6 +56,7 @@ export default function StockScreen() {
 
   const activeProducts = useMemo(() => (products ?? []).filter((p) => p.active), [products]);
   const saleProducts = useMemo(() => activeProducts.filter((p) => p.for_sale), [activeProducts]);
+  const visibleLocations = useMemo(() => locations?.filter((location) => location.id !== 'warehouse') ?? [], [locations]);
   const stockByProduct = useMemo(() => {
     const map = new Map<string, Map<string, number>>();
     for (const row of stock ?? []) {
@@ -184,7 +185,7 @@ export default function StockScreen() {
             onSubmit={() => void runAction('stock_take')}
           >
             <SearchableProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
-            <LocationSelect locations={locations} value={form.location} onChange={(v) => update('location', v)} label={t('location')} />
+            <LocationSelect locations={visibleLocations} value={form.location === 'warehouse' ? 'display' : form.location} onChange={(v) => update('location', v)} label={t('location')} />
             <Field label={t('counted')}><Input type="number" min="0" step="1" value={form.counted} onChange={(e) => update('counted', e.target.value)} required /></Field>
             <Field label={t('note')}><Input value={form.note} onChange={(e) => update('note', e.target.value)} /></Field>
           </ActionCard>
@@ -199,14 +200,14 @@ export default function StockScreen() {
           <thead className="border-b border-slate-200 bg-slate-50 text-start text-xs font-semibold text-slate-600">
             <tr>
               <th className="px-3 py-2.5 text-start">{t('product')}</th>
-              {locations.map((location) => <th key={location.id} className="px-3 py-2.5 text-end">{locationName(location.id)}</th>)}
+              {visibleLocations.map((location) => <th key={location.id} className="px-3 py-2.5 text-end">{locationName(location.id)}</th>)}
               <th className="px-3 py-2.5 text-end">{t('total')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {saleProducts.map((product) => {
               const rows = stockByProduct.get(product.id);
-              const quantities = locations.map((location) => rows?.get(location.id) ?? 0);
+              const quantities = visibleLocations.map((location) => rows?.get(location.id) ?? 0);
               const total = quantities.reduce((sum, quantity) => sum + quantity, 0);
               return (
                 <tr key={product.id}>
@@ -215,7 +216,7 @@ export default function StockScreen() {
                     <div className="font-mono text-xs text-slate-500">{product.item_code}</div>
                   </td>
                   {quantities.map((quantity, index) => (
-                    <td key={locations[index].id} className={`px-3 py-2 text-end tabular-nums ${quantity === 0 ? 'bg-red-50 font-semibold text-red-700' : ''}`}>{quantity}</td>
+                    <td key={visibleLocations[index].id} className={`px-3 py-2 text-end tabular-nums ${quantity === 0 ? 'bg-red-50 font-semibold text-red-700' : ''}`}>{quantity}</td>
                   ))}
                   <td className="px-3 py-2 text-end font-semibold tabular-nums">{total}</td>
                 </tr>

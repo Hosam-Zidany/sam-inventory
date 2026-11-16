@@ -65,7 +65,7 @@
   },
   "stock": {
     "title": "Stock",
-    "intro": "Receive deliveries, move stock between locations, and reconcile counted quantities.",
+    "intro": "Receive deliveries, move stock between locations, and count the display and storage locations.",
     "readOnly": "You can view stock. Only admins and warehouse staff can change it.",
     "product": "Product",
     "location": "Location",
@@ -76,7 +76,7 @@
     "warehouseQuantity": "Warehouse quantity",
     "counted": "Counted quantity",
     "note": "Note (optional)",
-    "matrixTitle": "Stock matrix",
+    "matrixTitle": "Display and storage stock",
     "total": "Total",
     "empty": "No products are currently marked for sale.",
     "receiveAllocationError": "Enter a valid total and make sure display + warehouse equals the total.",
