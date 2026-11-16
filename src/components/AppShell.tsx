@@ -16,7 +16,10 @@ const NAV: Array<{ href: string; key: string; roles: Role[] }> = [
   { href: '/products', key: 'products', roles: ['admin', 'sales', 'warehouse'] },
   { href: '/sale', key: 'newSale', roles: ['admin', 'sales'] },
   { href: '/stock', key: 'stock', roles: ['admin', 'sales', 'warehouse'] },
+  { href: '/inventory', key: 'inventory', roles: ['admin', 'sales', 'warehouse'] },
+  { href: '/sales', key: 'sales', roles: ['admin', 'sales'] },
   { href: '/import', key: 'import', roles: ['admin'] },
+  { href: '/maintenance', key: 'maintenance', roles: ['admin'] },
 ];
 
 export function RequireRole({ roles, children }: { roles?: Role[]; children: ReactNode }) {

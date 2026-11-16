@@ -16,6 +16,9 @@
     "products": "Products",
     "import": "Import / Export",
     "newSale": "New sale",
+    "inventory": "Inventory count",
+    "sales": "Sales",
+    "maintenance": "Maintenance",
     "stock": "Stock",
     "movements": "Movements",
     "reports": "Reports",
@@ -80,6 +83,7 @@
     "total": "Total",
     "empty": "No products are currently marked for sale.",
     "receiveAllocationError": "Enter a valid total and make sure display + warehouse equals the total.",
+    "returnDestination": "Destination: warehouse (warehouse quantities are not shown here).",
     "locationNames": "en",
     "actions": {
       "receive_stock": {
@@ -87,10 +91,55 @@
         "button": "Receive",
         "success": "Stock received."
       },
+      "inventory": {
+        "title": "Inventory count",
+        "intro": "Count display and storage only. Products with no visible stock are hidden.",
+        "searchProduct": "Search product",
+        "searchHint": "Search by code or name…",
+        "location": "Location",
+        "display": "Display",
+        "storage": "Storage",
+        "counted": "Counted quantity",
+        "saveCount": "Save count",
+        "selected": "Selected product",
+        "fullCount": "Full inventory count",
+        "product": "Product",
+        "total": "Total",
+        "print": "Print",
+        "saved": "Count saved.",
+        "invalidCount": "Select a product and enter a valid quantity.",
+        "empty": "No products have stock in display or storage."
+      },
+      "sales": {
+        "title": "Sales history",
+        "receipt": "Receipt",
+        "date": "Date",
+        "customer": "Customer",
+        "total": "Total",
+        "status": "Status",
+        "action": "Action",
+        "reason": "Return/exchange reason",
+        "cancel": "Cancel sale",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "confirmCancel": "Cancel receipt {receipt} and return its items to the selling location?"
+      },
+      "maintenance": {
+        "title": "Admin maintenance",
+        "body": "This permanently removes all imported products, stock movements, sales, customers and receipt history. Staff accounts remain.",
+        "clear": "Delete all imported materials",
+        "confirm": "Start over and permanently delete the catalog and all related history?",
+        "done": "Deleted {count} products and all related history."
+      },
       "transfer_stock": {
         "title": "Transfer stock",
         "button": "Transfer",
         "success": "Stock transferred."
+      },
+      "return_stock": {
+        "title": "Return pieces to warehouse",
+        "button": "Return pieces",
+        "success": "Pieces returned to warehouse."
       },
       "stock_take": {
         "title": "Stock take",

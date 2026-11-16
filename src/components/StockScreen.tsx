@@ -55,16 +55,7 @@ export default function StockScreen() {
   }, [load]);
 
   const activeProducts = useMemo(() => (products ?? []).filter((p) => p.active), [products]);
-  const saleProducts = useMemo(() => activeProducts.filter((p) => p.for_sale), [activeProducts]);
   const visibleLocations = useMemo(() => locations?.filter((location) => location.id !== 'warehouse') ?? [], [locations]);
-  const stockByProduct = useMemo(() => {
-    const map = new Map<string, Map<string, number>>();
-    for (const row of stock ?? []) {
-      if (!map.has(row.product_id)) map.set(row.product_id, new Map());
-      map.get(row.product_id)!.set(row.location, row.qty);
-    }
-    return map;
-  }, [stock]);
 
   function update(field: keyof typeof EMPTY_FORM, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -81,7 +72,7 @@ export default function StockScreen() {
     }));
   }
 
-  async function runAction(action: 'receive_stock' | 'transfer_stock' | 'stock_take') {
+  async function runAction(action: 'receive_stock' | 'transfer_stock' | 'return_stock' | 'stock_take') {
     setBusy(true);
     setError(null);
     setSuccess(null);
@@ -112,8 +103,8 @@ export default function StockScreen() {
     } else {
       const qty = Number(action === 'stock_take' ? form.counted : form.qty);
       const args =
-        action === 'transfer_stock'
-          ? { p_product: form.product, p_from: form.from, p_to: form.to, p_qty: qty, p_note: form.note || null }
+        action === 'transfer_stock' || action === 'return_stock'
+          ? { p_product: form.product, p_from: form.from, p_to: action === 'return_stock' ? 'warehouse' : form.to, p_qty: qty, p_note: form.note || null }
           : { p_product: form.product, p_location: form.location, p_counted: qty, p_note: form.note || null };
       rpcError = (await sb.rpc(action, args)).error;
     }
@@ -129,11 +120,6 @@ export default function StockScreen() {
 
   if (error && !products) return <Alert>{app('errorGeneric', { message: error })}</Alert>;
   if (!products || !locations || !stock) return <Spinner label={app('loading')} />;
-
-  const locationName = (id: string) => {
-    const location = locations.find((item) => item.id === id);
-    return location ? (t('locationNames') === 'ar' ? location.name_ar : location.name_en) : id;
-  };
 
   return (
     <div className="space-y-4">
@@ -167,7 +153,7 @@ export default function StockScreen() {
             title={t('actions.transfer_stock.title')}
             button={t('actions.transfer_stock.button')}
             disabled={busy}
-            onSubmit={() => void runAction('transfer_stock')}
+            onSubmit={() => void runAction('return_stock')}
           >
             <SearchableProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
             <div className="grid grid-cols-2 gap-2">
@@ -175,6 +161,19 @@ export default function StockScreen() {
               <LocationSelect locations={locations} value={form.to} onChange={(v) => update('to', v)} label={t('to')} />
             </div>
             <Field label={t('quantity')}><Input type="number" min="1" step="1" value={form.qty} onChange={(e) => update('qty', e.target.value)} required /></Field>
+            <Field label={t('note')}><Input value={form.note} onChange={(e) => update('note', e.target.value)} /></Field>
+          </ActionCard>
+
+          <ActionCard
+            title={t('actions.return_stock.title')}
+            button={t('actions.return_stock.button')}
+            disabled={busy}
+            onSubmit={() => void runAction('transfer_stock')}
+          >
+            <SearchableProductSelect products={activeProducts} value={form.product} onChange={(v) => update('product', v)} label={t('product')} />
+            <LocationSelect locations={visibleLocations} value={form.from === 'warehouse' ? 'display' : form.from} onChange={(v) => update('from', v)} label={t('from')} />
+            <Field label={t('quantity')}><Input type="number" min="1" step="1" value={form.qty} onChange={(e) => update('qty', e.target.value)} required /></Field>
+            <p className="text-xs text-slate-500">{t('returnDestination')}</p>
             <Field label={t('note')}><Input value={form.note} onChange={(e) => update('note', e.target.value)} /></Field>
           </ActionCard>
 
@@ -192,40 +191,6 @@ export default function StockScreen() {
         </div>
       )}
 
-      <Card className="overflow-x-auto">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="font-bold">{t('matrixTitle')}</h2>
-        </div>
-        <table className="w-full min-w-[42rem] text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-start text-xs font-semibold text-slate-600">
-            <tr>
-              <th className="px-3 py-2.5 text-start">{t('product')}</th>
-              {visibleLocations.map((location) => <th key={location.id} className="px-3 py-2.5 text-end">{locationName(location.id)}</th>)}
-              <th className="px-3 py-2.5 text-end">{t('total')}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {saleProducts.map((product) => {
-              const rows = stockByProduct.get(product.id);
-              const quantities = visibleLocations.map((location) => rows?.get(location.id) ?? 0);
-              const total = quantities.reduce((sum, quantity) => sum + quantity, 0);
-              return (
-                <tr key={product.id}>
-                  <td className="px-3 py-2">
-                    <div className="font-medium">{product.name_ar || product.name}</div>
-                    <div className="font-mono text-xs text-slate-500">{product.item_code}</div>
-                  </td>
-                  {quantities.map((quantity, index) => (
-                    <td key={visibleLocations[index].id} className={`px-3 py-2 text-end tabular-nums ${quantity === 0 ? 'bg-red-50 font-semibold text-red-700' : ''}`}>{quantity}</td>
-                  ))}
-                  <td className="px-3 py-2 text-end font-semibold tabular-nums">{total}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {saleProducts.length === 0 && <p className="p-6 text-center text-sm text-slate-500">{t('empty')}</p>}
-      </Card>
     </div>
   );
 }

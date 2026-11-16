@@ -118,7 +118,6 @@ export default function ProductsScreen() {
         {isAdmin && (
           <>
             <Button variant="secondary" onClick={() => void changeRate()}>{t('exchangeRate', { rate: exchangeRate })}</Button>
-            <Button variant="danger" onClick={() => void clearCatalog()}>{t('clearCatalog')}</Button>
             <Button onClick={() => setEditing('new')}>{t('add')}</Button>
           </>
         )}
