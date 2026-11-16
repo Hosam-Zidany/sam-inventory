@@ -3,9 +3,9 @@
 Bilingual (English / Arabic, RTL) inventory and digital-receipt app for SAM Company.
 Stack: Next.js + Tailwind/shadcn · Supabase (Postgres, Auth, RLS) · Vercel.
 
-**Status: build steps 1–2 of 6 done** — database, roles, RLS (step 1); app shell, login,
-Products screen and CSV import (step 2). Stock, sales/receipts, dashboard/reports and
-PWA/barcode follow.
+**Status: build steps 1–4 in progress** — database, roles, RLS; app shell, login, Products
+and CSV import; stock receiving/transfers/counts; dashboard and sales/receipts are available.
+Movements, reports, PWA/offline queue and barcode scanning remain for later steps.
 
 The app is a **static export** (no server of its own): the browser talks straight to Supabase,
 and every rule is enforced by Postgres. That is what lets it be hosted free on GitHub Pages.
@@ -80,7 +80,9 @@ npm run dev                     # http://localhost:3000  (redirects to /ar/)
 ```
 
 Sign in with a user you gave a role (see Setup, step 3). Admin sees Products and Import / Export;
-sales and warehouse see Products read-only (the database refuses their writes regardless of the UI).
+sales and warehouse see Products read-only. Admin and warehouse staff can receive, transfer and
+count stock; admin and sales staff can create sales. The database refuses unauthorized writes
+regardless of the UI.
 
 ## Host on GitHub Pages
 

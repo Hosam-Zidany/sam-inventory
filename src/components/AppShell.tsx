@@ -14,6 +14,8 @@ import SetupScreen from './SetupScreen';
 const NAV: Array<{ href: string; key: string; roles: Role[] }> = [
   { href: '/', key: 'dashboard', roles: ['admin', 'sales', 'warehouse'] },
   { href: '/products', key: 'products', roles: ['admin', 'sales', 'warehouse'] },
+  { href: '/sale', key: 'newSale', roles: ['admin', 'sales'] },
+  { href: '/stock', key: 'stock', roles: ['admin', 'sales', 'warehouse'] },
   { href: '/import', key: 'import', roles: ['admin'] },
 ];
 

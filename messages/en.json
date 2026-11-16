@@ -48,8 +48,81 @@
   },
   "home": {
     "welcome": "Welcome",
-    "soon": "The next screens (stock, sales, reports) arrive in the following build steps.",
+    "subtitle": "Inventory and sales at a glance.",
+    "newSale": "New sale",
+    "stats": {
+      "products": "Active products",
+      "forSale": "For sale",
+      "units": "Stock units",
+      "sales": "Sales (last 24h)"
+    },
+    "lowStock": "Low stock",
+    "noLowStock": "No low-stock products.",
+    "todaySales": "Sales today",
+    "recentMovements": "Recent movements",
+    "noMovements": "No movements yet.",
     "openProducts": "Open products"
+  },
+  "stock": {
+    "title": "Stock",
+    "intro": "Receive deliveries, move stock between locations, and reconcile counted quantities.",
+    "readOnly": "You can view stock. Only admins and warehouse staff can change it.",
+    "product": "Product",
+    "location": "Location",
+    "from": "From",
+    "to": "To",
+    "quantity": "Quantity",
+    "counted": "Counted quantity",
+    "note": "Note (optional)",
+    "matrixTitle": "Stock matrix",
+    "total": "Total",
+    "empty": "No products are currently marked for sale.",
+    "locationNames": "en",
+    "actions": {
+      "receive_stock": {
+        "title": "Receive stock",
+        "button": "Receive",
+        "success": "Stock received."
+      },
+      "transfer_stock": {
+        "title": "Transfer stock",
+        "button": "Transfer",
+        "success": "Stock transferred."
+      },
+      "stock_take": {
+        "title": "Stock take",
+        "button": "Save count",
+        "success": "Stock count saved."
+      }
+    }
+  },
+  "sale": {
+    "title": "New sale",
+    "currency": "Currency",
+    "tier": "Price tier",
+    "general": "General",
+    "wireless": "Wireless",
+    "soldFrom": "Sell from",
+    "search": "Find a product",
+    "searchHint": "Search name, code or barcode…",
+    "available": "Available",
+    "noResults": "No matching products.",
+    "cart": "Cart",
+    "remove": "Remove",
+    "customer": "Customer (optional)",
+    "total": "Total",
+    "emptyCart": "Add at least one product.",
+    "complete": "Complete sale",
+    "saving": "Saving…",
+    "newSale": "Start another sale",
+    "receipt": {
+      "title": "Receipt",
+      "number": "Receipt number",
+      "date": "Date",
+      "thanks": "Thank you — شكراً",
+      "print": "Print receipt",
+      "whatsapp": "Send WhatsApp"
+    }
   },
   "products": {
     "title": "Products",
