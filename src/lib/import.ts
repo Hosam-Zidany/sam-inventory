@@ -6,11 +6,13 @@ import { parseNumber, type ParsedNumber } from './number';
  *
  *   planImport(csvText, existingProducts) -> { ok, plan }
  *
- * Two formats are auto-detected from the header row (spec 4.7):
+ * Three formats are auto-detected from the header row (spec 4.7):
  *   'pdf'      Source_Group, Category, Item_Code_or_Name, Unit_or_Length,
  *              Specs_or_Resolution, Price_USD, Price_SYP,
  *              Wireless_Customer_Price_USD, Wireless_Customer_Price_SYP,
  *              Duplicate_Status, Sources
+ *   'section'  Price List, Section, Item No, Description, Unit, USD Price,
+ *              SYP Price, Notes
  *   'template' item_code, name, name_ar, category, unit, price_usd, price_syp,
  *              wireless_price_usd, wireless_price_syp, for_sale, barcode (+ specs)
  *
@@ -18,7 +20,7 @@ import { parseNumber, type ParsedNumber } from './number';
  * a row's patch leaves the existing value alone; a key present is written.
  */
 
-export type ImportFormat = 'pdf' | 'template';
+export type ImportFormat = 'pdf' | 'section' | 'template';
 
 export interface ProductPatch {
   name?: string;
@@ -116,6 +118,7 @@ export function normalizeHeader(h: string): string {
 
 export function detectFormat(headers: string[]): ImportFormat | null {
   if (headers.includes('item_code_or_name')) return 'pdf';
+  if (headers.includes('item_no') && headers.includes('description')) return 'section';
   if (headers.includes('item_code')) return 'template';
   return null;
 }
@@ -200,6 +203,24 @@ function mapPdfRow(r: Cells): MappedRow {
   return { item_code: code, name: code, patch, issues };
 }
 
+function mapSectionRow(r: Cells): MappedRow {
+  const issues: Issue[] = [];
+  const patch: ProductPatch = {};
+  const code = clean(r.item_no);
+  const name = clean(r.description);
+  const category = clean(r.section);
+  const unit = clean(r.unit);
+
+  if (category) patch.category = category;
+  if (unit) patch.unit = unit;
+  setPrice(patch, issues, 'price_usd', parseNumber(r.usd_price), 'template');
+  setPrice(patch, issues, 'price_syp', parseNumber(r.syp_price), 'template');
+  const notes = clean(r.notes);
+  if (notes) patch.specs = notes;
+
+  return { item_code: code, name, patch, issues };
+}
+
 function mapTemplateRow(r: Cells, headers: Set<string>): MappedRow {
   const issues: Issue[] = [];
   const patch: ProductPatch = {};
@@ -271,7 +292,8 @@ export function planImport(text: string, existing: ExistingProduct[]): PlanResul
 
   parsed.data.forEach((cells, i) => {
     const line = i + 2;
-    const mapped = format === 'pdf' ? mapPdfRow(cells) : mapTemplateRow(cells, headerSet);
+    const mapped =
+      format === 'pdf' ? mapPdfRow(cells) : format === 'section' ? mapSectionRow(cells) : mapTemplateRow(cells, headerSet);
     const issues = [...mapped.issues];
 
     if (!mapped.item_code) issues.push({ kind: 'missing_code', severity: 'error' });

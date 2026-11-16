@@ -8,6 +8,7 @@ import { validateConfig } from './supabase';
 
 const PDF_HEADER =
   'Source_Group,Category,Item_Code_or_Name,Unit_or_Length,Specs_or_Resolution,Price_USD,Price_SYP,Wireless_Customer_Price_USD,Wireless_Customer_Price_SYP,Duplicate_Status,Sources';
+const SECTION_HEADER = 'Price List,Section,Item No,Description,Unit,USD Price,SYP Price,Notes';
 
 const existing = (over: Partial<ExistingProduct> = {}): ExistingProduct => ({
   item_code: 'X',
@@ -54,8 +55,30 @@ describe('parseNumber', () => {
 describe('helpers', () => {
   it('detects the format from headers (BOM and case tolerant)', () => {
     expect(detectFormat(PDF_HEADER.split(',').map(normalizeHeader))).toBe('pdf');
+    expect(detectFormat(SECTION_HEADER.split(',').map(normalizeHeader))).toBe('section');
     expect(detectFormat(['﻿Item_Code', 'name'].map(normalizeHeader))).toBe('template');
     expect(detectFormat(['foo', 'bar'])).toBeNull();
+  });
+
+  describe('planImport — Price List format', () => {
+    it('maps Item No, Description, Section and prices', () => {
+      const p = plan([
+        SECTION_HEADER,
+        'Main,Routers,RB500,Router,قطعة,25,"375,000",Dual band',
+      ].join('\n'));
+      expect(p.format).toBe('section');
+      expect(p.rows[0]).toMatchObject({
+        item_code: 'RB500',
+        name: 'Router',
+        patch: {
+          category: 'Routers',
+          unit: 'قطعة',
+          specs: 'Dual band',
+          price_usd: 25,
+          price_syp: 375000,
+        },
+      });
+    });
   });
   it('parses booleans in English and Arabic', () => {
     expect(parseBool('TRUE')).toBe(true);

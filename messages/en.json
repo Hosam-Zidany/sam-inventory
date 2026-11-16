@@ -187,6 +187,7 @@
     "reading": "Reading file…",
     "format": {
       "pdf": "Format: price-list extraction",
+      "section": "Format: Price List / Section",
       "template": "Format: simple template"
     },
     "summary": "{new} new · {update} updated · {unchanged} unchanged · {skipped} skipped",
